@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Document</title>
+        <script src="js folder/vue.js"></script>
+        <script src="js folder/jquery.min.js"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <!-- 使用vue jquery axios 实现在完成功能基础上的代码易读性与可修改性 -->
+        <style>
+            /* 包括框选设计与实时背景动效设计 */
+            .Welcome{
+            position: absolute;
+            z-index: 10;
+            display: flex;
+            min-height: 50vh;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            right: -5cm;
+            font-size: 3.5rem;
+            color: transparent;
+            text-shadow: 
+            0px 0px 1px rgba(255, 255, 255, .5),
+            0px 4px 4px rgba(0, 0, 0, .05)
+            ;
+            /* 透明文字模板 */
+        }
+    
+        body{
+            /* 背景颜色 */
+            margin: 0;
+            min-height: 100vh;
+            background-color: #e493d0;
+            background-image: 
+            radial-gradient(closest-side,rgba(248, 90, 85,1),rgba(248, 90, 85,0)),
+            radial-gradient(closest-side,rgba(131, 243, 79, 1),rgba(131, 243, 79, 0)),
+            radial-gradient(closest-side,rgba(193, 133, 241,1),rgba(193,133,241,0)),
+            radial-gradient(closest-side,rgba(235, 88, 168,1),rgba(235, 88, 168,0)),
+            radial-gradient(closest-side,rgba(24, 42, 206, 1),rgba(24, 42, 206, 0));
+            background-size: 130vmax 130vmax,
+                             60vmax 60vmax,
+                             90vmax 90vmax,
+                             110vmax 110vmax,
+                             90vmax 90vmax;
+            background-position: -80vmax -80vmax,
+                                 60vmax -30vmax,
+                                 10vmax 10vmax,
+                                 -30vmax -10vmax,
+                                 50vmax 50vmax;
+            background-repeat: no-repeat;
+            
+            animation: 10s movement linear infinite;
+        }
+        body::after{
+            /* 背景部分过滤器 */
+            display: block;
+            position: fixed;
+            width:100%;
+            height: 100%;
+            top:0;
+            left:0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        @keyframes movement {
+            /* 背景部分动效 */
+            0%,100%{
+                background-size: 130vmax 130vmax,
+                             70vmax 70vmax,
+                             90vmax 90vmax,
+                             110vmax 110vmax,
+                             90vmax 90vmax;
+            background-position: -80vmax -80vmax,
+                                 60vmax -30vmax,
+                                 10vmax 10vmax,
+                                 -30vmax -10vmax,
+                                 50vmax 50vmax;
+            }
+            25%{
+                background-size: 110vmax 150vmax,
+                             100vmax 100vmax,
+                             110vmax 70vmax,
+                             90vmax 130vmax,
+                             70vmax 110vmax;
+            background-position: -60vmax -100vmax,
+                                 80vmax -10vmax,
+                                 -10vmax -10vmax,
+                                 -10vmax 10vmax,
+                                 30vmax 70vmax;
+            }
+            50%{
+                background-size: 120vmax 140vmax,
+                             90vmax 70vmax,
+                             100vmax 80vmax,
+                             90vmax 130vmax,
+                             80vmax 100vmax;
+            background-position: -45vmax -110vmax,
+                                 90vmax 0vmax,
+                                 -20vmax -20vmax,
+                                 -5vmax 15vmax,
+                                 25vmax 80vmax;
+            }
+            75%{
+                background-size: 110vmax 150vmax,
+                             100vmax 100vmax,
+                             110vmax 70vmax,
+                             90vmax 130vmax,
+                             70vmax 110vmax;
+            background-position: -60vmax -100vmax,
+                                 80vmax -10vmax,
+                                 -10vmax -10vmax,
+                                 -10vmax 10vmax,
+                                 30vmax 70vmax;
+            }
+        }
+        ul{
+            z-index: 10;
+        }
+                        *{
+                margin: 0;
+                padding: 0;
+            }
+            #box{
+                width: 800px;
+                margin: 0 auto;
+            }
+            .tab-tit{
+                font-size: 0;
+                width: 800px;
+            }
+            .tab-tit a{
+                display: inline-block;
+                height: 50px;
+                line-height: 50px;
+                width: 16.666%;
+                font-size: 18px;
+                text-align: center;
+                background: #ccc;
+                color: #333;
+                text-decoration:none;
+            }
+            .tab-tit .cur{
+                background: #09f;
+                color: #fff;
+            }
+            .tab-con div{
+                border: 1px solid #ccc;
+                height: 1200px;
+                width: 798px;
+                margin: 0 auto;
+                padding-top: 20px;
+                background-color: rgba(255, 255, 255,0.5);
+            }
+            #choice{
+                text-align: center;
+            }
+            #wenben{
+                background-color: rgba(255, 255, 255,0.5);
+            }
+            
+        </style>
+    </head>
+    <body>
+        <div id="choice">
+            <!-- 四个按钮 分别实现： 1.文本框中文字转化为txt并下载  2.文本自动化解析  3.文本按词性分词并手动解析  4.根据所选项生成json文件-->
+        <input type="file" id="fileSubmit" /><button id="btn2">下载文本</button><button id="btn0">文本自动解析</button><button id="btn1">文本分词化</button><button id="btn3">根据您的勾选项生成json文件</button><br>
+        <textarea id="wenben"  clos=",50" rows="5" warp="virtual" style="height: 200px;width: 800px;">我们的自动化分词工具有两种模式。在第一种模式中，我们自动为您选择好了如当事人、性别、民族、出生地等您所需要的内容，您直接下载即可；在第二种模式中，我们按照名词、动词、形容词等自动为您做好分词化处理，你可以自由进行选择。</textarea><br>
+        </div>
+        
+        <div id="box">
+            <!--点击设置msg的值  如果msg等于0，第一个a添加cur类名，如果msg等于1，第二个a添加cur类名，以此类推。
+               添加了cur类名，a就会改变样式 @click,:class ,v-show这三个是vue常用的指令或添加事件的方式-->
+           <div class="tab-tit">
+               <a href="javascript:;" @click="msg=0" :class="{'cur':msg===0}">当事人</a>
+               <a href="javascript:;" @click="msg=1" :class="{'cur':msg===1}">性别</a>
+               <a href="javascript:;" @click="msg=2" :class="{'cur':msg===2}">民族</a>
+               <a href="javascript:;" @click="msg=3" :class="{'cur':msg===3}">出生地</a>
+               <a href="javascript:;" @click="msg=4" :class="{'cur':msg===4}">案由</a>
+               <a href="javascript:;" @click="msg=5" :class="{'cur':msg===5}">相关法院</a>
+           </div>
+               <!--根据msg的值显示div,如果msg等于0，第一个div显示，其它三个div不显示。
+                   如果msg等于1，第二个div显示，其它三个div不显示。以此类推-->
+           <div class="tab-con">
+               <div v-show="msg===0" id="zero">
+                    
+               </div>
+               <div v-show="msg===1" id="one">
+                    
+               </div>
+               <div v-show="msg===2" id="two">
+                    
+               </div>
+               <div v-show="msg===3" id="three">
+                    
+               </div>
+               <div v-show="msg===4" id="four">
+                    
+               </div>
+               <div v-show="msg===5" id="five">
+                    
+               </div>
+           </div>
+       </div>
+    </body>
+    <script>  
+        var if_auto=true;
+        var if_hand=true;
+        // 当按下“文本自动解析”之后 端口自动相应请求 并把按照规范分好的词汇提供给您
+        document.querySelector("#btn0").onclick=function(){//Automatic separating
+            var data=document.getElementById('wenben');
+            var text=data.value;
+            if_auto=true;
+            if_hand=false;
+             axios.post("http://127.0.0.1:5000",{"text":text}).then(function(response){
+                console.log(response);
+                $(function(){//案由
+                    var resu1="";
+                    if(typeof(response.data.Accusation==String)){
+                        resu1+="<input type='checkbox' checked='checked' id='"+response.data.Accusation+"' style='width:100px;'>"+response.data.Accusation;
+                    }
+                    else{
+                    for(var i=0;i<response.data.Accusation[0].length;i++){
+                        resu1+="<input type='checkbox' id='"+response.data.Accusation[0][i]+"' style='width:100px;'>"+response.data.Accusation[0][i];
+                    } 
+                    }
+                    console.log(typeof(response.data.Accusation));
+                    $("#four").empty().append(resu1);       
+                });
+                $(function(){//出生地
+                    var resu2="";
+                    if(typeof(response.data.Accusation==String)){
+                        resu2+="<input type='checkbox' checked='checked' id='"+response.data.Birthplace+"' style='width:100px;'>"+response.data.Birthplace;
+                    }
+                    else{
+                    for(var i=0;i<response.data.Birthplace[0].length;i++){
+                        resu2+="<input type='checkbox' id='"+response.data.Birthplace[0][i]+"' style='width:100px;'>"+response.data.Birthplace[0][i];
+                    } 
+                    }
+                    $("#three").empty().append(resu2);       
+                });
+                $(function(){//当事人
+                    var resu3="";
+                    if(typeof(response.data.Accusation==String)){
+                        resu3+="<input type='checkbox' checked='checked' id='"+response.data.Criminals+"' style='width:100px;'>"+response.data.Criminals;
+                    }
+                    else{
+                    for(var i=0;i<response.data.Criminals[0].length;i++){
+                        resu3+="<input type='checkbox' id='"+response.data.Criminals[0][i]+"' style='width:100px;'>"+response.data.Criminals[0][i];
+                    } 
+                    }
+                    $("#zero").empty().append(resu3);       
+                });
+                $(function(){//民族
+                    var resu4="";
+                    if(typeof(response.data.Accusation==String)){
+                        resu4+="<input type='checkbox' checked='checked' id='"+response.data.Ethnicity+"' style='width:100px;'>"+response.data.Ethnicity;
+                    }
+                    else{
+                    for(var i=0;i<response.data.Ethnicity[0].length;i++){
+                        resu4+="<input type='checkbox' id='"+response.data.Ethnicity[0][i]+"' style='width:100px;'>"+response.data.Ethnicity[0][i];
+                    } 
+                    }
+                    $("#two").empty().append(resu4);       
+                });
+                $(function(){//性别
+                    var resu5="";
+                    if(typeof(response.data.Accusation==String)){
+                        resu5+="<input type='checkbox' checked='checked' id='"+response.data.Gender+"' style='width:100px;'>"+response.data.Gender;
+                    }
+                    else{
+                    for(var i=0;i<response.data.Gender[0].length;i++){
+                        resu5+="<input type='checkbox' id='"+response.data.Gender[0][i]+"' style='width:100px;'>"+response.data.Gender[0][i];
+                    }
+                } 
+                    $("#one").empty().append(resu5);       
+                });
+                $(function(){//相关法院
+                    var resu6="";
+                    
+                        resu6+="<input type='checkbox' checked='checked' id='"+response.data.Courts+"' style='width:100px;'>"+response.data.Courts;
+                     
+                    $("#five").empty().append(resu6);       
+                });
+             },function(err){
+                 console.log(err);
+             })
+            
+        }
+        //当按下“文本分词化”之后 按照作业要求将词汇分为动词，名词，形容词等不同词性 并提供给您进行选择
+        document.querySelector("#btn1").onclick=function(){//handicraft separating
+            var data=document.getElementById('wenben');
+            var text=data.value;
+            if_auto=false;
+            if_hand=true;
+            axios.post("http://127.0.0.1:5001",{"text":text}).then(function(response){
+                console.log(response);
+                $(function(){
+                    var resu="";
+                    resu=resu+"形容词"+"<br>";
+                    for(var i=0;i<response.data.adj.length;i++){
+                        resu+="<input type='checkbox' id='"+response.data.adj[i]+"' style='width:80px;'>"+response.data.adj[i];
+                    }
+                    resu=resu+"<br>"+"副词"+"<br>";
+                    for(var i=0;i<response.data.adv.length;i++){
+                        resu+="<input type='checkbox' id='"+response.data.adv[i]+"' style='width:80px;'>"+response.data.adv[i];
+                    }
+                    resu=resu+"<br>"+"名词"+"<br>";
+                    for(var i=0;i<response.data.noun.length;i++){
+                        resu+="<input type='checkbox' id='"+response.data.noun[i]+"' style='width:400px;'>"+response.data.noun[i];
+                        if(i>=20){
+                            break;
+                        }
+                    }
+                    resu=resu+"<br>"+"动词"+"<br>";
+                    for(var i=0;i<response.data.verb.length;i++){
+                        resu+="<input type='checkbox' id='"+response.data.verb[i]+"' style='width:400px;'>"+response.data.verb[i];
+                        if(i>=20){
+                            break;
+                        }
+                    }
+                    $("#zero").empty().append(resu);
+                    $("#one").empty().append(resu);
+                    $("#two").empty().append(resu);
+                    $("#three").empty().append(resu);
+                    $("#four").empty().append(resu);
+                    $("#five").empty().append(resu);
+                    
+                })
+
+            },function(err){
+                console.log(err);  
+            })
+        }
+        //当按下“下载文本之后”，文本框中的内容自动转化为txt类型文件并下载到电脑的download目录
+        document.querySelector("#btn2").onclick=function(){
+            var data=document.getElementById('wenben');
+            var content=data.value;
+            var blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+            saveAs(content, "content.txt");
+        }
+        function saveAs(data,type,name) {
+                var link = document.createElement("a");
+                var exportName=name?name:'data';
+                var url = 'data:text/'+type+';charset=utf-8,\uFEFF' + encodeURI(data);
+                link.href = url;
+                link.download = exportName+"."+type;
+                link.click();
+            }
+        //按下“根据您的勾选项生成json文件”之后，自动识别并通过脚本进行json合成与保存
+        document.querySelector("#btn3").onclick=function(){
+            var chks=$("input:checked");
+            console.log(chks);
+            var resuf="";
+            resuf+="{";
+            if(if_auto){
+                console.log("auto");
+                resuf=resuf+"'当事人':";
+                resuf=resuf+"'"+chks[0].id+"'";
+                resuf=resuf+",";
+                resuf=resuf+"'性别':";
+                resuf=resuf+"'"+chks[1].id+"'";
+                resuf=resuf+",";
+                resuf=resuf+"'民族':";
+                resuf=resuf+"'"+chks[2].id+"'";
+                resuf=resuf+",";
+                resuf=resuf+"'出生地':";
+                resuf=resuf+"'"+chks[3].id+"'";
+                resuf=resuf+",";
+                resuf=resuf+"'案由':";
+                resuf=resuf+"'"+chks[4].id+"'";
+                resuf=resuf+",";
+                resuf=resuf+"'相关法院':";
+                resuf=resuf+"'"+chks[5].id+"'";
+                
+            }else{
+                console.log("non-auto");
+                if(chks.length==6){
+                resuf=resuf+"'当事人':";
+                resuf=resuf+"'"+chks[0].id+"'";
+                resuf=resuf+",";
+                resuf=resuf+"'性别':";
+                resuf=resuf+"'"+chks[1].id+"'";
+                resuf=resuf+",";
+                resuf=resuf+"'民族':";
+                resuf=resuf+"'"+chks[2].id+"'";
+                resuf=resuf+",";
+                resuf=resuf+"'出生地':";
+                resuf=resuf+"'"+chks[3].id+"'";
+                resuf=resuf+",";
+                resuf=resuf+"'案由':";
+                resuf=resuf+"'"+chks[4].id+"'";
+                resuf=resuf+",";
+                resuf=resuf+"'相关法院':";
+                resuf=resuf+"'"+chks[5].id+"'";
+                }else{
+                    resuf=resuf+"'当事人':";
+                    for(var i=0;;i++){
+                        if(chks[i].id=="男"||chks[i].id=="女"){
+                            break;
+                        }
+                    }
+                    var temp="";
+                    for(var j=0;j<i;j++){
+                        temp+=chks[j].id;
+                        if(j!=i-1){
+                            temp+=",";
+                        }
+                    }
+                    temp="'"+temp+"'";
+                    resuf=resuf+temp+",";
+                    console.log(resuf);
+                    resuf=resuf+"'性别':";
+                    for(var i=i;;i++){
+                        if(chks[i].id.endsWith("族")){
+                            break;
+                        }
+                    }
+                    var temp="";
+                    for(var j=j;j<i;j++){
+                        temp+=chks[j].id;
+                        if(j!=i-1){
+                            temp+=",";
+                        }
+                    }
+                    temp="'"+temp+"'";
+                    resuf=resuf+temp+",";
+                    console.log(resuf);
+                    resuf=resuf+"'民族':";
+                    for(var i=i;;i++){
+                        if(!chks[i].id.endsWith("族")){
+                            break;
+                        }
+                    }
+                    var temp="";
+                    for(var j=j;j<i;j++){
+                        temp+=chks[j].id;
+                        if(j!=i-1){
+                            temp+=",";
+                        }
+                    }
+                    temp="'"+temp+"'";
+                    resuf=resuf+temp+",";
+                    console.log(resuf);
+                    resuf=resuf+"'出生地':";
+                    for(var i=i;;i++){
+                        if(!chks[i].id.includes("省")&&!chks[i].id.includes("市")&&!chks[i].id.includes("区")){
+                            break;
+                        }
+                    }
+                    var temp="";
+                    for(var j=j;j<i;j++){
+                        temp+=chks[j].id;
+                        if(j!=i-1){
+                            temp+=",";
+                        }
+                    }
+                    temp="'"+temp+"'";
+                    resuf=resuf+temp+",";
+                    console.log(resuf);
+                    resuf=resuf+"'案由':";
+                    for(var i=i;;i++){
+                        if(chks[i].id.endsWith("院")){
+                            break;
+                        }
+                    }
+                    var temp="";
+                    for(var j=j;j<i;j++){
+                        temp+=chks[j].id;
+                        if(j!=i-1){
+                            temp+=",";
+                        }
+                    }
+                    temp="'"+temp+"'";
+                    resuf=resuf+temp+",";
+                    console.log(resuf);
+                    resuf=resuf+"'相关法院':";
+                    var temp="";
+                    for(var j=j;j<chks.length;j++){
+                        temp+=chks[j].id;
+                        if(j!=chks.length-1){
+                            temp+=",";
+                        }
+                    }
+                    temp="'"+temp+"'";
+                    resuf=resuf+temp;
+                }
+            }
+            resuf+="}";
+            console.log(resuf)
+            axios.post("http://127.0.0.1:5002",{"text":resuf}).then(function(response){
+                console.log(response);
+            },function(err){
+                console.log(err);
+            })
+        }
+
+
+        //filesubmit按钮 进行文件的选择 您也可以直接在文本框上输入内容
+        document.getElementById('fileSubmit').addEventListener('change',function(){
+            readFile(this,function(data){
+                document.getElementById("wenben").value=data;
+            },function(){
+                alert('解析文件出错');
+            })
+            });
+        function readFile(input,sc,ec) {
+        //支持chrome IE10
+        if (window.FileReader) {
+            var file = input.files[0];
+            filename = file.name.split(".")[0];
+            var reader = new FileReader();
+            reader.onload = function() {
+                sc(this.result); //这里的 this 指向 FileReader 
+            };
+            reader.readAsText(file);
+        }
+        //支持IE 7 8 9 10
+        else if (typeof window.ActiveXObject != 'undefined'){
+            var xmlDoc;
+            xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+            xmlDoc.async = false;
+            xmlDoc.load(input.value);
+            sc(xmlDoc);
+        }
+        //支持FF
+        else if (document.implementation && document.implementation.createDocument) {
+            var xmlDoc;
+            xmlDoc = document.implementation.createDocument("", "", null);
+            xmlDoc.async = false;
+            xmlDoc.load(input.value);
+            sc(xmlDoc);
+        } else {
+            ec();
+        }
+    }
+                
+            new Vue({
+                el: '#box',
+                data: {
+                    msg: 0
+                }
+            })
+        
+    </script>
+</html>
